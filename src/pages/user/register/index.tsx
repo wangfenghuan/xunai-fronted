@@ -17,6 +17,8 @@ import { useEffect, useState } from 'react';
 import type { StateType } from './service';
 import { fakeRegister } from './service';
 import useStyles from './styles';
+import {userRegister} from "@/services/api/userController";
+import ms from "@umijs/utils/compiled/debug/ms";
 
 const FormItem = Form.Item;
 const { Option } = Select;
@@ -30,12 +32,14 @@ const passwordProgressMap: {
   pass: 'normal',
   poor: 'exception',
 };
-const Register: FC = () => {
+const Register: () => JSX.Element = () => {
   const { styles } = useStyles();
   const [count, setCount]: [number, any] = useState(0);
   const [open, setVisible]: [boolean, any] = useState(false);
   const [prefix, setPrefix]: [string, any] = useState('86');
   const [popover, setPopover]: [boolean, any] = useState(false);
+  // ✅ 新增状态
+  const [submitting, setSubmitting] = useState(false); // 控制按钮 loading 状态
   const confirmDirty = false;
   let interval: number | undefined;
 
@@ -85,25 +89,17 @@ const Register: FC = () => {
     }
     return 'poor';
   };
-  const { loading: submitting, run: register } = useRequest<{
-    data: StateType;
-  }>(fakeRegister, {
-    manual: true,
-    onSuccess: (data, params) => {
-      if (data.status === 'ok') {
-        message.success('注册成功！');
-        history.push({
-          pathname: `/user/register-result?account=${params[0].email}`,
-        });
-      }
-    },
-  });
-  const onFinish = (values: Store) => {
-    register(values);
+  const onFinish = async (values: API.UserRegisterRequest) => {
+    setSubmitting(true)
+    const msg = await userRegister({...values})
+    if (msg.code === 0){
+      setSubmitting(false)
+      console.log("ok")
+    }
   };
   const checkConfirm = (_: any, value: string) => {
     const promise = Promise;
-    if (value && value !== form.getFieldValue('password')) {
+    if (value && value !== form.getFieldValue('userPassword')) {
       return promise.reject('两次输入的密码不匹配!');
     }
     return promise.resolve();
@@ -132,7 +128,7 @@ const Register: FC = () => {
     setPrefix(value);
   };
   const renderPasswordProgress = () => {
-    const value = form.getFieldValue('password');
+    const value = form.getFieldValue('userPassword');
     const passwordStatus = getPasswordStatus();
     return value?.length ? (
       <div
@@ -149,22 +145,22 @@ const Register: FC = () => {
   };
   return (
     <div className={styles.main}>
-      <h3>注册</h3>
+      <h2>注册</h2>
       <Form form={form} name="UserRegister" onFinish={onFinish}>
         <FormItem
-          name="email"
+          name="userAccount"
           rules={[
             {
               required: true,
-              message: '请输入邮箱地址!',
+              message: '请输入用户名!',
             },
             {
-              type: 'email',
-              message: '邮箱地址格式错误!',
+              type: 'string',
+              message: '用户名格式错误!',
             },
           ]}
         >
-          <Input size="large" placeholder="邮箱" />
+          <Input size="large" placeholder="用户名" />
         </FormItem>
         <Popover
           getPopupContainer={(node) => {
@@ -199,10 +195,10 @@ const Register: FC = () => {
           open={open}
         >
           <FormItem
-            name="password"
+            name="userPassword"
             className={
-              form.getFieldValue('password') &&
-              form.getFieldValue('password').length > 0 &&
+              form.getFieldValue('userPassword') &&
+              form.getFieldValue('userPassword').length > 0 &&
               styles.password
             }
             rules={[
@@ -219,7 +215,7 @@ const Register: FC = () => {
           </FormItem>
         </Popover>
         <FormItem
-          name="confirm"
+          name="checkPassword"
           rules={[
             {
               required: true,
@@ -232,60 +228,6 @@ const Register: FC = () => {
         >
           <Input size="large" type="password" placeholder="确认密码" />
         </FormItem>
-        <FormItem
-          name="mobile"
-          rules={[
-            {
-              required: true,
-              message: '请输入手机号!',
-            },
-            {
-              pattern: /^\d{11}$/,
-              message: '手机号格式错误!',
-            },
-          ]}
-        >
-          <Space.Compact style={{ width: '100%' }}>
-            <Select
-              size="large"
-              value={prefix}
-              onChange={changePrefix}
-              style={{
-                width: '30%',
-              }}
-            >
-              <Option value="86">+86</Option>
-              <Option value="87">+87</Option>
-            </Select>
-
-            <Input size="large" placeholder="手机号" />
-          </Space.Compact>
-        </FormItem>
-        <Row gutter={8}>
-          <Col span={16}>
-            <FormItem
-              name="captcha"
-              rules={[
-                {
-                  required: true,
-                  message: '请输入验证码!',
-                },
-              ]}
-            >
-              <Input size="large" placeholder="验证码" />
-            </FormItem>
-          </Col>
-          <Col span={8}>
-            <Button
-              size="large"
-              disabled={!!count}
-              className={styles.getCaptcha}
-              onClick={onGetCaptcha}
-            >
-              {count ? `${count} s` : '获取验证码'}
-            </Button>
-          </Col>
-        </Row>
         <FormItem>
           <div className={styles.footer}>
             <Button

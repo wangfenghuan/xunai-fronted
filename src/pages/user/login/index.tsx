@@ -8,12 +8,13 @@ import {
   WeiboCircleOutlined,
 } from '@ant-design/icons';
 import { LoginForm, ProFormText } from '@ant-design/pro-components';
-import { Helmet, useModel } from '@umijs/max';
+import {Helmet, Link, useModel, useNavigate} from '@umijs/max';
 import { Alert, App, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import Settings from '../../../../config/defaultSettings';
+import useGlobalState from "@/models/user";
 const useStyles = createStyles(({ token }) => {
   return {
     action: {
@@ -49,16 +50,6 @@ const useStyles = createStyles(({ token }) => {
     },
   };
 });
-const ActionIcons = () => {
-  const { styles } = useStyles();
-  return (
-    <>
-      <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.action} />
-      <TaobaoCircleOutlined key="TaobaoCircleOutlined" className={styles.action} />
-      <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.action} />
-    </>
-  );
-};
 const Lang = () => {
   const { styles } = useStyles();
   return;
@@ -78,43 +69,30 @@ const LoginMessage: React.FC<{
   );
 };
 const Login: React.FC = () => {
+  const navigate = useNavigate()
   const [userLoginState, setUserLoginState] = useState<API.UserVO>({});
   const [type, setType] = useState<string>('account');
-  const { initialState, setInitialState } = useModel('@@initialState');
+  // const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
   const { message } = App.useApp();
-  const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      flushSync(() => {
-        setInitialState((s) => ({
-          ...s,
-          currentUser: userInfo,
-        }));
-      });
-    }
-  };
   const handleSubmit = async (values: API.UserLoginRequest) => {
     try {
       // 登录
       const msg = await userLogin({
         ...values,
       });
-      if (msg.data.code === 0) {
-        const defaultLoginSuccessMessage = '登录成功！';
-        message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
-        const urlParams = new URL(window.location.href).searchParams;
-        window.location.href = urlParams.get('redirect') || '/';
+      if (msg.code === 0) {
+        message.success('登录成功');
+        // 设置全局状态,用户的登录信息
+        useGlobalState().setGlobalState(msg.data)
+        // 路由跳转到主页
+        navigate('/')
         return;
+      }else {
+        message.error('登录失败' + msg.msg)
       }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
-      setUserLoginState(msg);
     } catch (error) {
-      const defaultLoginFailureMessage = '登录失败，请重试！';
-      console.log(error);
-      message.error(defaultLoginFailureMessage);
+      message.error('登录失败，请重试！' + error);
     }
   };
   const { status, type: loginType } = userLoginState;
@@ -139,9 +117,7 @@ const Login: React.FC = () => {
             maxWidth: '75vw',
           }}
           logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
-          subTitle={'Ant Design 是西湖区最具影响力的 Web 设计规范'}
-          actions={['其他登录方式 :', <ActionIcons key="icons" />]}
+          title="伙伴匹配"
           onFinish={async (values) => {
             await handleSubmit(values as API.UserLoginRequest);
           }}
@@ -208,6 +184,7 @@ const Login: React.FC = () => {
               忘记密码 ?
             </a>
           </div>
+          <Link to="/user/register">注册</Link>
         </LoginForm>
       </div>
       <Footer />
