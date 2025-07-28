@@ -85,17 +85,6 @@ const BaseView: React.FC = () => {
             >
               <ProFormText
                 width="md"
-                name="email"
-                label="邮箱"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入您的邮箱!',
-                  },
-                ]}
-              />
-              <ProFormText
-                width="md"
                 name="name"
                 label="昵称"
                 rules={[
@@ -147,16 +136,12 @@ const BaseView: React.FC = () => {
                     labelInValue: true,
                   }}
                   name="province"
-                  request={async () => {
-                    return queryProvince().then(({ data }) => {
-                      return data.map((item) => {
-                        return {
-                          label: item.name,
-                          value: item.id,
-                        };
-                      });
-                    });
-                  }}
+                  options={[
+                    {
+                      label: '河北省',
+                      value: 'HeBei',
+                    },
+                  ]}
                 />
                 <ProFormDependency name={['province']}>
                   {({ province }) => {
@@ -174,37 +159,17 @@ const BaseView: React.FC = () => {
                           },
                         ]}
                         disabled={!province}
-                        request={async () => {
-                          if (!province?.key) {
-                            return [];
-                          }
-                          return queryCity(province.key || '').then(
-                            ({ data }) => {
-                              return data.map((item) => {
-                                return {
-                                  label: item.name,
-                                  value: item.id,
-                                };
-                              });
-                            },
-                          );
-                        }}
+                        options={[
+                          {
+                            label: '石家庄市',
+                            value: 'ShiJiaZhuang',
+                          },
+                        ]}
                       />
                     );
                   }}
                 </ProFormDependency>
               </ProForm.Group>
-              <ProFormText
-                width="md"
-                name="address"
-                label="街道地址"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入您的街道地址!',
-                  },
-                ]}
-              />
               <ProFormFieldSet
                 name="phone"
                 label="联系电话"

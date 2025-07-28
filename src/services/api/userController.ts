@@ -1,6 +1,15 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from "@umijs/max";
+
+/** 此处后端没有提供注释 GET /user */
+export async function getCurrentUser(options?: { [key: string]: any }) {
+  return request<API.BaseResponseUserVO>("/user", {
+    method: "GET",
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 POST /user/add */
 export async function addUser(
   body: API.UserAddRequest,

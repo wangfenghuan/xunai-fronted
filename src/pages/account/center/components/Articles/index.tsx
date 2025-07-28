@@ -3,7 +3,6 @@ import { useRequest } from '@umijs/max';
 import { List, Tag } from 'antd';
 import React from 'react';
 import type { ListItemDataType } from '../../data.d';
-import { queryFakeList } from '../../service';
 import ArticleListContent from '../ArticleListContent';
 import useStyles from './index.style';
 
@@ -20,9 +19,7 @@ const Articles: React.FC = () => {
 
   // 获取tab列表数据
   const { data: listData } = useRequest(() => {
-    return queryFakeList({
-      count: 30,
-    });
+    return null;
   });
   return (
     <List<ListItemDataType>

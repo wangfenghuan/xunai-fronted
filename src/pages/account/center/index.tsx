@@ -5,7 +5,6 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import { GridContent } from '@ant-design/pro-components';
-import { useRequest } from '@umijs/max';
 import {
   Avatar,
   Card,
@@ -16,13 +15,11 @@ import {
   Row,
   Tag,
 } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import useStyles from './Center.style';
-import Applications from './components/Applications';
 import Articles from './components/Articles';
-import Projects from './components/Projects';
 import type { CurrentUser, TagType, tabKeyType } from './data.d';
-import { queryCurrent } from './service';
+import {getCurrentUser} from "@/services/api/userController";
 
 const operationTabList = [
   {
@@ -30,36 +27,6 @@ const operationTabList = [
     tab: (
       <span>
         文章{' '}
-        <span
-          style={{
-            fontSize: 14,
-          }}
-        >
-          (8)
-        </span>
-      </span>
-    ),
-  },
-  {
-    key: 'applications',
-    tab: (
-      <span>
-        应用{' '}
-        <span
-          style={{
-            fontSize: 14,
-          }}
-        >
-          (8)
-        </span>
-      </span>
-    ),
-  },
-  {
-    key: 'projects',
-    tab: (
-      <span>
-        项目{' '}
         <span
           style={{
             fontSize: 14,
@@ -140,20 +107,27 @@ const TagList: React.FC<{
   );
 };
 const Center: React.FC = () => {
+  const [loading, setLoading] = useState(true)
   const { styles } = useStyles();
+  const [user, setUser] = useState<API.UserVO>({})
   const [tabKey, setTabKey] = useState<tabKeyType>('articles');
-
-  //  获取用户信息
-  const { data: currentUser, loading } = useRequest(() => {
-    return queryCurrent();
-  });
+  const getUser = async () => {
+    const res = await getCurrentUser()
+    setLoading(false)
+    setUser(res.data)
+  }
+  // 页面加载就获取用户信息
+  useEffect(() => {
+    getUser()
+  },[])
 
   //  渲染用户信息
   const renderUserInfo = ({
-    title,
-    group,
-    geographic,
-  }: Partial<CurrentUser>) => {
+    username,
+    gender,
+    description,
+    address
+  }: Partial<API.UserVO>) => {
     return (
       <div className={styles.detail}>
         <p>
@@ -162,7 +136,7 @@ const Center: React.FC = () => {
               marginRight: 8,
             }}
           />
-          {title}
+          {username}
         </p>
         <p>
           <ClusterOutlined
@@ -170,7 +144,7 @@ const Center: React.FC = () => {
               marginRight: 8,
             }}
           />
-          {group}
+          {gender}
         </p>
         <p>
           <HomeOutlined
@@ -180,21 +154,28 @@ const Center: React.FC = () => {
           />
           {
             (
-              geographic || {
+              description || {
                 province: {
                   label: '',
                 },
               }
-            ).province.label
+            )
           }
+        </p>
+        <p>
+          <HomeOutlined
+            style={{
+              marginRight: 8,
+            }}
+          />
           {
             (
-              geographic || {
+              address|| {
                 city: {
                   label: '',
                 },
               }
-            ).city.label
+            )
           }
         </p>
       </div>
@@ -203,12 +184,6 @@ const Center: React.FC = () => {
 
   // 渲染tab切换
   const renderChildrenByTabKey = (tabValue: tabKeyType) => {
-    if (tabValue === 'projects') {
-      return <Projects />;
-    }
-    if (tabValue === 'applications') {
-      return <Applications />;
-    }
     if (tabValue === 'articles') {
       return <Articles />;
     }
@@ -225,35 +200,23 @@ const Center: React.FC = () => {
             }}
             loading={loading}
           >
-            {!loading && currentUser && (
+            {!loading && user && (
               <>
                 <div className={styles.avatarHolder}>
-                  <img alt="" src={currentUser.avatar} />
-                  <div className={styles.name}>{currentUser.name}</div>
-                  <div>{currentUser?.signature}</div>
+                  <img alt="" src={user.avatarUrl} />
+                  <div className={styles.name}>{user.username}</div>
                 </div>
-                {renderUserInfo(currentUser)}
+                {renderUserInfo(user)}
                 <Divider dashed />
-                <TagList tags={currentUser.tags || []} />
+                <div>
+                  {user.tags?.map(tag => (<Tag></Tag>)}
+                </div>
                 <Divider
                   style={{
                     marginTop: 16,
                   }}
                   dashed
                 />
-                <div className={styles.team}>
-                  <div className={styles.teamTitle}>团队</div>
-                  <Row gutter={36}>
-                    {currentUser.notice?.map((item) => (
-                      <Col key={item.id} lg={24} xl={12}>
-                        <a href={item.href}>
-                          <Avatar size="small" src={item.logo} />
-                          {item.member}
-                        </a>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
               </>
             )}
           </Card>

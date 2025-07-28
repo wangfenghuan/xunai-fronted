@@ -72,7 +72,8 @@ const Login: React.FC = () => {
   const navigate = useNavigate()
   const [userLoginState, setUserLoginState] = useState<API.UserVO>({});
   const [type, setType] = useState<string>('account');
-  // const { initialState, setInitialState } = useModel('@@initialState');
+  const { setGlobalState } = useGlobalState();
+  const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
   const { message } = App.useApp();
   const handleSubmit = async (values: API.UserLoginRequest) => {
@@ -83,10 +84,13 @@ const Login: React.FC = () => {
       });
       if (msg.code === 0) {
         message.success('登录成功');
-        // 设置全局状态,用户的登录信息
-        useGlobalState().setGlobalState(msg.data)
+        // ✅ 更新全局状态
+        setInitialState((prev) => ({
+          ...prev,
+          currentUser: msg.data, // 设置用户信息
+        }));
         // 路由跳转到主页
-        navigate('/')
+        navigate('/account')
         return;
       }else {
         message.error('登录失败' + msg.msg)

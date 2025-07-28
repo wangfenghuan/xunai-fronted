@@ -1,21 +1,20 @@
 ﻿export default [
   {
+    name: '主页',
+    icon: 'home',
+    path: '/',
+    component: './main'
+  },
+  {
     path: '/user',
     layout: false,
     routes: [
       { path: '/user/login', layout: false, name: '登录', component: './user/login' },
       { path: '/user', redirect: '/user/login' },
-      {
-        name: '注册结果',
-        icon: 'smile',
-        path: '/user/register-result',
-        component: './user/register-result',
-      },
       { name: '注册', icon: 'smile', path: '/user/register', component: './user/register' },
     ],
   },
   {
-    name: '异常页',
     icon: 'warning',
     path: '/exception',
     routes: [
@@ -26,7 +25,7 @@
     ],
   },
   {
-    name: '个人页',
+    name: '我的',
     icon: 'user',
     path: '/account',
     routes: [
@@ -40,6 +39,5 @@
       },
     ],
   },
-  { path: '/', redirect: '/dashboard/analysis' },
   { component: '404', path: '/*' },
 ];
